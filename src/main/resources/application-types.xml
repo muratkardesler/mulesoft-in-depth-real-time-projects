@@ -1,0 +1,40 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="inputCSVMetaData" format="csv">
+      <types:shape format="weave"><![CDATA[%dw 2.0
+
+type inputCSVMetaData = Array<{|  id: Number,   name: String,   address: String,   salary: Number,   email: String,   phone: String,   gender: String,   city: String|}> {"isQuotedString": "false",
+"header": "true",
+"headerLineNumber": "0"}
+
+]]></types:shape>
+      <types:properties>
+        <types:property name="headerLineNumber" value="0"/>
+        <types:property name="header" value="true"/>
+        <types:property name="isQuotedString" value="false"/>
+      </types:properties>
+    </types:type>
+    <types:type name="outputCSVMetaData" format="json">
+      <types:shape format="weave" example="examples/output.json"><![CDATA[%dw 2.0
+
+type outputCSVMetaData = Array<{|  EMP_ID: Number {"typeId": "int"},   EMP_NAME: String,   EMP_SAL: Number {"typeId": "int"},   EMP_ADDRESS: String,   EMP_EMAIL: String|}> {"example": "[{\\\"EMP_ID\\\":8989,\\\"EMP_NAME\\\":\\\"yyuy\\\",\\\"EMP_SAL\\\":8989898,\\\"EMP_ADDRESS\\\":\\\"turkey\\\",\\\"EMP_EMAIL\\\":\\\"test@gmail.com\\\"},{\\\"EMP_ID\\\":8989,\\\"EMP_NAME\\\":\\\"yyuy\\\",\\\"EMP_SAL\\\":8989898,\\\"EMP_ADDRESS\\\":\\\"turkey\\\",\\\"EMP_EMAIL\\\":\\\"test@gmail.com\\\"}]"}
+
+]]></types:shape>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#880abfbd-1f39-4cec-9f2f-14bd647f8615">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="inputCSVMetaData"/>
+        </types:message>
+      </types:input-event>
+      <types:output-event>
+        <types:message>
+          <types:payload type="outputCSVMetaData"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+</types:mule>
