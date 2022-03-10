@@ -1,0 +1,9 @@
+http:
+  port: "8081"
+  path: "scure-prop"
+db:
+  host: "localhost"
+  port: "1521"
+  user: "system"
+  password: "dbpass"  
+  
