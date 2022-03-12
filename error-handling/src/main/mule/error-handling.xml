@@ -11,8 +11,25 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 		<http:listener-connection host="0.0.0.0" port="8081" />
 	</http:listener-config>
 	<db:config name="Database_Config" doc:name="Database Config" doc:id="841502d7-4b36-414b-8ddd-3d8a60d6454c" >
-		<db:mssql-connection host="localhost" port="1433" user="muratkaa" password="123456" databaseName="mule4training" />
+		<db:mssql-connection host="localhost" port="1433" user="muratk" password="123456" databaseName="mule4training" />
 	</db:config>
+	<sub-flow name="fetch-employee-sub-flow" doc:id="73b6096c-eb41-45fc-9cc6-aeb64ad37571" >
+		<try doc:name="Try" doc:id="26768319-7213-433f-a385-bcaf26463ef2" >
+			<logger level="INFO" doc:name="start" doc:id="7067c545-1e12-46ff-952d-6e61743bb2b2" message="start db call" />
+			<db:select doc:id="a1c569e6-ed1c-4a6f-92cb-f61511de2f49" config-ref="Database_Config">
+			<db:sql><![CDATA[select EMP_ID , EMP_NAME , EMP_STATUS  from emp_master where EMP_ID=:EMP_ID]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+	EMP_ID: attributes.queryParams.empid
+}]]]></db:input-parameters>
+		</db:select>
+			<logger level="INFO" doc:name="end" doc:id="c7b54673-8b5e-4cb5-a733-bfe2f1166ced" message="end db call" />
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="2986893b-4149-4847-84dd-22be4812dcbe" >
+					<logger level="INFO" doc:name="Logger" doc:id="9d802402-430b-40dc-aee4-bb0d2e46ec26" message="Error "/>
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</sub-flow>
 	<flow name="error-handlingFlow" doc:id="a0761b6d-59c1-415b-afd1-cc2d910599e3" >
 		<http:listener doc:name="Listener" doc:id="82dc5951-e3c8-470a-a5c7-aa46bfcece05" config-ref="HTTP_Listener_config" path="fetch-employee">
 			<http:error-response statusCode="#[vars.statusCode]" reasonPhrase="#[vars.reasonPhrase]" >
@@ -20,12 +37,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 			</http:error-response>
 		</http:listener>
 		<validation:is-number numberType="INTEGER" doc:id="671a5313-56e4-463e-a0ad-b777f0ad5252" value="#[attributes.queryParams.empid]" message="empid should be number"/>
-		<db:select doc:id="a1c569e6-ed1c-4a6f-92cb-f61511de2f49" config-ref="Database_Config">
-			<db:sql ><![CDATA[select EMP_ID , EMP_NAME , EMP_STATUS  from emp_master where EMP_ID=:EMP_ID]]></db:sql>
-			<db:input-parameters ><![CDATA[#[{
-	EMP_ID: attributes.queryParams.empid
-}]]]></db:input-parameters>
-		</db:select>
+		<flow-ref doc:name="fetch-employee-sub-flow" doc:id="9e0b2b4d-026e-4a40-bb35-e9163616301e" name="fetch-employee-sub-flow" />
 		<ee:transform doc:name="Transform Message" doc:id="e1c5b2e5-4427-4273-8f05-eb1154e94410" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
