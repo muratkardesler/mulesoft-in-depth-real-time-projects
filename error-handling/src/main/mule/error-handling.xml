@@ -13,6 +13,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 	<db:config name="Database_Config" doc:name="Database Config" doc:id="841502d7-4b36-414b-8ddd-3d8a60d6454c" >
 		<db:mssql-connection host="localhost" port="1433" user="muratk" password="123456" databaseName="mule4training" />
 	</db:config>
+	<configuration doc:name="Configuration" doc:id="46c2bbf4-823e-4b6d-94cd-3621416efe75" defaultErrorHandler-ref="global-error-handlerError_Handler" />
 	<sub-flow name="fetch-employee-sub-flow" doc:id="73b6096c-eb41-45fc-9cc6-aeb64ad37571" >
 		<try doc:name="Try" doc:id="26768319-7213-433f-a385-bcaf26463ef2" >
 			<logger level="INFO" doc:name="start" doc:id="7067c545-1e12-46ff-952d-6e61743bb2b2" message="start db call" />
@@ -38,9 +39,11 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 		</http:listener>
 		<validation:is-number numberType="INTEGER" doc:id="671a5313-56e4-463e-a0ad-b777f0ad5252" value="#[attributes.queryParams.empid]" message="empid should be number"/>
 		<flow-ref doc:name="fetch-employee-sub-flow" doc:id="9e0b2b4d-026e-4a40-bb35-e9163616301e" name="fetch-employee-sub-flow" />
-		<ee:transform doc:name="Transform Message" doc:id="e1c5b2e5-4427-4273-8f05-eb1154e94410" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
+		<choice doc:name="Choice" doc:id="7bed73c5-3c09-4ba0-9226-09ded744354a" >
+			<when expression="#[sizeOf(payload) &gt; 0]">
+				<ee:transform doc:name="Transform Message" doc:id="e1c5b2e5-4427-4273-8f05-eb1154e94410">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
 {
@@ -49,42 +52,15 @@ output application/json
 	"Status": payload[0].EMP_STATUS
 }]]></ee:set-payload>
 			</ee:message>
-			<ee:variables >
-				<ee:set-variable variableName="statusCode" ><![CDATA[400]]></ee:set-variable>
-				<ee:set-variable variableName="reasonPhrase" ><![CDATA["Bad Request"]]></ee:set-variable>
+			<ee:variables>
+				<ee:set-variable variableName="statusCode"><![CDATA[400]]></ee:set-variable>
+				<ee:set-variable variableName="reasonPhrase"><![CDATA["Bad Request"]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<error-handler >
-			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="67a9c639-477a-4df5-9691-04710dbad033" type="VALIDATION:INVALID_NUMBER">
-				<ee:transform doc:name="Transform Message" doc:id="92146fb3-fdd9-4e37-a8cc-495e971087c4" >
-					<ee:message >
-						<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
----
-{
-	"Status": 400,
-	"Message": error.description
-}]]></ee:set-payload>
-					</ee:message>
-				</ee:transform>
-			</on-error-propagate>
-			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="ef4fdc1c-28f3-4184-9f33-cf1eb9a19ac0" type="ANY">
-				<ee:transform doc:name="Transform Message" doc:id="828d9d5f-7601-4e3a-b515-987ca14d5d67" >
-					<ee:message >
-						<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
----
-{
-	"Status": 500,
-	"Message": "Internal server error"
-}]]></ee:set-payload>
-					</ee:message>
-					<ee:variables >
-						<ee:set-variable variableName="statusCode" ><![CDATA[500]]></ee:set-variable>
-						<ee:set-variable variableName="reasonPhrase" ><![CDATA["Server Error"]]></ee:set-variable>
-					</ee:variables>
-				</ee:transform>
-			</on-error-propagate>
-		</error-handler>
+			</when>
+			<otherwise >
+				<raise-error doc:name="Raise error" doc:id="5faa3f3a-0abd-481e-b7ca-548614e90068" type="EMP:EMPLOYEE_NOT_FOUND"/>
+			</otherwise>
+		</choice>
 	</flow>
 </mule>
