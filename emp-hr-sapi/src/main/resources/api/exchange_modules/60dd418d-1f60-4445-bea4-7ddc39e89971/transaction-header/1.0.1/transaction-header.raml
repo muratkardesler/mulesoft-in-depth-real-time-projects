@@ -1,0 +1,9 @@
+#%RAML 1.0 Trait
+  usage: Apply this trait to ensure API Consumers are sending a transacation id for end to end tracking of a transaction
+  headers:
+        x-transaction-id:
+          type: string
+          description: Transaction ID
+          example: "44b32520-61ee-47b4-907d-fa15869f3c4d"
+          required: false 
+            

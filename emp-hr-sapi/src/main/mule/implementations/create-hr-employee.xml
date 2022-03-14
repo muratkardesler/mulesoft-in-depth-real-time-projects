@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="473cfe8c-d77a-4ac5-9187-b18d0fe08895" >
+		<db:my-sql-connection host="localhost" port="3306" user="root" password="1234" />
+	</db:config>
+	<flow name="post:\create-employee:application\json:emp-hr-sapi-config">
+		<logger level="INFO" doc:name="Entry Log" doc:id="71e42a13-b012-4e8d-8bf0-13fcc42189f1" message="Transaction [#[vars.transactionId]] - Started create employee flow and payload is : #[payload]"/>
+		<ee:transform doc:name="Transform Employee" doc:id="6797dc47-80fd-43ba-b828-add3e3a1cf48" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+	emp_id: payload.empID,
+	emp_name: payload.empName,
+	emp_address: payload.empAddress,
+	emp_status: payload.empStatus,
+	emp_join_date: now() as LocalDateTime {format:"yyyy-MM-dd hh-MM-ss"}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<db:insert doc:name="Insert" doc:id="827fe954-e405-47d8-af37-ed8f4cf47f74" config-ref="Database_Config">
+			<db:sql ><![CDATA[insert into hr.emp_master(emp_id, emp_name, emp_address, emp_status, emp_join_date) values(:emp_id, :emp_name, :emp_address, :emp_status, :emp_join_date)]]></db:sql>
+			<db:input-parameters ><![CDATA[#[payload]]]></db:input-parameters>
+		</db:insert>
+		<ee:transform xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" doc:name="Prepare Response">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"code": 201,
+	"message": "Created",
+	"description": "Employee created in HR system",
+	"datetime": now() as String {format: "yyyy-MM-dd'T'hh-MM-ss"},
+	"transactionID": vars.transactionId
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+	</mule>
